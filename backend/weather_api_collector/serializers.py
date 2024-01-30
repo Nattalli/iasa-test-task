@@ -1,11 +1,6 @@
 from rest_framework import serializers
-from .models import WeatherData, City
 
-
-class WeatherDataSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WeatherData
-        fields = '__all__'
+from .models import City
 
 
 class CitySerializer(serializers.ModelSerializer):

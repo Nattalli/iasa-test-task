@@ -131,10 +131,6 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-OPEN_WEATHER_TOKEN = os.getenv("SECRET_KEY")
-OPEN_WEATHER_API_URL = "http://api.openweathermap.org/"
-
-
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 25,
