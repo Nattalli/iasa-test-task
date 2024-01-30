@@ -35,7 +35,7 @@ class CityListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = City.objects.order_by('city')
-        search_query = self.request.query_params.get('search', None)
+        search_query = self.request.query_params.get('search', '').capitalize()
         if search_query:
             queryset = queryset.filter(city__icontains=search_query)
         return queryset
@@ -49,7 +49,7 @@ class CountryAverageView(generics.RetrieveAPIView):
         if not country:
             return Response({'error': 'Country parameter is missing'}, status=400)
 
-        average_values = City.objects.filter(country=country).aggregate(
+        average_values = City.objects.filter(country=country.capitalize()).aggregate(
             average_lat=Avg('lat'),
             average_lng=Avg('lng')
         )
