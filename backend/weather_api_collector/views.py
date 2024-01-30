@@ -5,7 +5,9 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .models import City
 from .models import WeatherData
+from .serializers import CitySerializer
 from .serializers import WeatherDataSerializer
 from .utils import update_weather_data_from_last_update, get_historical_weather_data
 
@@ -43,3 +45,14 @@ class HistoricalWeatherDataView(APIView):
             })
 
         return Response(historical_data)
+
+
+class CityListView(generics.ListAPIView):
+    serializer_class = CitySerializer
+
+    def get_queryset(self):
+        queryset = City.objects.order_by('city')
+        search_query = self.request.query_params.get('search', None)
+        if search_query:
+            queryset = queryset.filter(city__icontains=search_query)
+        return queryset
