@@ -1,15 +1,15 @@
-from datetime import datetime, timedelta
+from django.db.models import Avg
+from django.http import JsonResponse
 
 from django.http import JsonResponse
 from rest_framework import generics
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .models import City
 from .models import WeatherData
-from .serializers import CitySerializer
+from .serializers import CitySerializer, CountryAverageSerializer
 from .serializers import WeatherDataSerializer
-from .utils import update_weather_data_from_last_update, get_historical_weather_data
+from .utils import update_weather_data_from_last_update
 
 
 class WeatherDataRetrieveView(generics.RetrieveAPIView):
@@ -39,3 +39,20 @@ class CityListView(generics.ListAPIView):
         if search_query:
             queryset = queryset.filter(city__icontains=search_query)
         return queryset
+
+
+class CountryAverageView(generics.RetrieveAPIView):
+    serializer_class = CountryAverageSerializer
+
+    def get(self, request, *args, **kwargs):
+        country = self.kwargs.get('country')
+        if not country:
+            return Response({'error': 'Country parameter is missing'}, status=400)
+
+        average_values = City.objects.filter(country=country).aggregate(
+            average_lat=Avg('lat'),
+            average_lng=Avg('lng')
+        )
+
+        serializer = self.get_serializer(average_values)
+        return Response(serializer.data)
