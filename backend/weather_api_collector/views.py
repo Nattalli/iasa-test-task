@@ -30,23 +30,6 @@ class WeatherDataRetrieveView(generics.RetrieveAPIView):
             return JsonResponse({'detail': 'Weather data not found.'}, status=404)
 
 
-class HistoricalWeatherDataView(APIView):
-    def get(self, request, city, country):
-        today_date = datetime.now().date()
-        today_datetime = datetime(today_date.year, today_date.month, today_date.day)
-
-        historical_data = []
-        for i in range(1, 11):
-            date = today_datetime - timedelta(days=i * 365)
-            historical_weather = get_historical_weather_data(city, country, date)
-            historical_data.append({
-                'date': date.strftime('%Y-%m-%d'),
-                'weather': historical_weather
-            })
-
-        return Response(historical_data)
-
-
 class CityListView(generics.ListAPIView):
     serializer_class = CitySerializer
 

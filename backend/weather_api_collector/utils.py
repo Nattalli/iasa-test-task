@@ -36,15 +36,3 @@ def update_weather_data_from_last_update(city, country):
                 fetch_and_update_weather_data(city, country, weather_data)
     except WeatherData.DoesNotExist:
         fetch_and_update_weather_data(city, country)
-
-
-def get_historical_weather_data(city, country, date):
-    timestamp = int(date.timestamp())
-
-    url = f'{OPEN_WEATHER_API_URL}data/2.5/onecall/timemachine?lat={city}&lon={country}&dt={timestamp}&appid={OPEN_WEATHER_TOKEN}'
-    print(url)
-
-    response = requests.get(url)
-    data = response.json()
-
-    return data
