@@ -43,7 +43,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
 
-    'api_collector',
+    'weather_api_collector',
 ]
 
 MIDDLEWARE = [
@@ -130,3 +130,6 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+OPEN_WEATHER_TOKEN = os.getenv("SECRET_KEY")
+OPEN_WEATHER_API_URL = "http://api.openweathermap.org/"
