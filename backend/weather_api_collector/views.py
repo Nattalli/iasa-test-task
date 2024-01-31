@@ -94,6 +94,24 @@ class WeatherDataView(generics.RetrieveAPIView):
             sentence = generate_sentence(response_data['key_indicators'])
             response_data['sentence'] = sentence
 
+            real_api_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lng}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m"
+
+            response_real = requests.get(real_api_url)
+            response_real.raise_for_status()
+            real_weather_data = response_real.json()
+
+            real_temperature = real_weather_data['hourly']['temperature_2m']
+
+            real_temperature_for_comparison = real_temperature[-24:]
+
+            rmse = calculate_rmse(forecast_data['temperature_2m'], real_temperature_for_comparison)
+            mae = calculate_mae(forecast_data['temperature_2m'], real_temperature_for_comparison)
+            mre = calculate_mre(forecast_data['temperature_2m'], real_temperature_for_comparison)
+
+            response_data['rmse'] = rmse
+            response_data['mae'] = mae
+            response_data['mre'] = mre
+
             return Response(response_data)
 
         except requests.exceptions.RequestException as e:
@@ -102,7 +120,6 @@ class WeatherDataView(generics.RetrieveAPIView):
 
 def generate_sentence(key_indicators):
     humidity_mean = key_indicators['relative_humidity_2m']['mean']
-
     wind_mean = key_indicators['wind_speed_10m']['mean']
     wind_std = key_indicators['wind_speed_10m']['std']
 
@@ -110,3 +127,15 @@ def generate_sentence(key_indicators):
                f"The wind speed has been averaging {wind_mean:.2f} m/s with a {wind_std:.2f} m/s variation."
 
     return sentence
+
+
+def calculate_rmse(predictions, targets):
+    return ((predictions - targets) ** 2).mean() ** 0.5
+
+
+def calculate_mae(predictions, targets):
+    return (abs(predictions - targets)).mean()
+
+
+def calculate_mre(predictions, targets):
+    return (abs(predictions - targets) / targets).mean()
