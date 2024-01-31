@@ -77,7 +77,9 @@ class WeatherDataView(generics.RetrieveAPIView):
             forecast = fit_model.forecast(steps=24)
 
             forecast_data = pd.DataFrame(
-                {'time': pd.date_range(start=df['ds'].max(), periods=24, freq='h'), 'temperature_2m': forecast})
+                {'time': pd.date_range(start=(datetime.now() + relativedelta(days=1)).strftime('%Y-%m-%d'), periods=24,
+                                       freq='h'),
+                 'temperature_2m': forecast})
 
             response_data = {
                 'forecast_data': {
