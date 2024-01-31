@@ -1,10 +1,12 @@
 from datetime import datetime
 
+import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 from django.db.models import Avg
 from rest_framework import generics
 from rest_framework.response import Response
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 from .models import City
 from .serializers import CitySerializer, CountryAverageSerializer
@@ -46,7 +48,8 @@ class WeatherDataView(generics.RetrieveAPIView):
         if not lat or not lng:
             return Response({'error': 'Latitude and longitude parameters are required'}, status=400)
 
-        start_date = request.query_params.get('start_date', (datetime.now() - relativedelta(years=1)).strftime('%Y-%m-%d'))
+        start_date = request.query_params.get('start_date',
+                                              (datetime.now() - relativedelta(years=1)).strftime('%Y-%m-%d'))
         end_date = request.query_params.get('end_date', datetime.now().strftime('%Y-%m-%d'))
 
         api_url = f"https://archive-api.open-meteo.com/v1/era5?latitude={lat}&longitude={lng}&start_date={start_date}&end_date={end_date}&hourly=temperature_2m"
@@ -55,6 +58,31 @@ class WeatherDataView(generics.RetrieveAPIView):
             response = requests.get(api_url)
             response.raise_for_status()
             weather_data = response.json()
-            return Response(weather_data)
+
+            data = {'time': weather_data['hourly']['time'], 'temperature_2m': weather_data['hourly']['temperature_2m']}
+            df = pd.DataFrame(data)
+            df = df.dropna()
+
+            df['time'] = pd.to_datetime(df['time'])
+            df.columns = ['ds', 'temperature_2m']
+
+            model = ExponentialSmoothing(df['temperature_2m'], seasonal='add', seasonal_periods=24)
+            fit_model = model.fit()
+            forecast = fit_model.forecast(steps=24)
+
+            forecast_data = pd.DataFrame(
+                {'time': pd.date_range(start=df['ds'].max(), periods=24, freq='h'), 'temperature_2m': forecast})
+
+            response_data = {
+                'forecast_data': {
+                    'time': forecast_data['time'].dt.strftime('%Y-%m-%d %H:%M:%S').values.tolist(),
+                    'temperature_2m': forecast_data['temperature_2m'].values.tolist()
+                }
+            }
+
+            key_indicators = df[['temperature_2m']].describe()
+            response_data['key_indicators'] = key_indicators.to_dict()
+
+            return Response(response_data)
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Request to open-meteo API failed: {str(e)}'}, status=500)
