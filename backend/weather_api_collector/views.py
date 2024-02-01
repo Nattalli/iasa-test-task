@@ -1,15 +1,18 @@
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 from django.db.models import Avg
+from numpy import inf
 from rest_framework import generics
 from rest_framework.response import Response
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 from .models import City
 from .serializers import CitySerializer, CountryAverageSerializer
+from .utils import generate_sentence, calculate_mae, calculate_mre, calculate_rmse
 
 
 class CityListView(generics.ListAPIView):
@@ -21,7 +24,6 @@ class CityListView(generics.ListAPIView):
         if search_query:
             queryset = queryset.filter(city__icontains=search_query)
         return queryset
-
 
 class CountryAverageView(generics.RetrieveAPIView):
     serializer_class = CountryAverageSerializer
@@ -81,6 +83,8 @@ class WeatherDataView(generics.RetrieveAPIView):
                                        freq='h'),
                  'temperature_2m': forecast})
 
+            forecast_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+
             response_data = {
                 'forecast_data': {
                     'time': forecast_data['time'].dt.strftime('%Y-%m-%d %H:%M:%S').values.tolist(),
@@ -110,32 +114,10 @@ class WeatherDataView(generics.RetrieveAPIView):
 
             response_data['rmse'] = rmse
             response_data['mae'] = mae
-            response_data['mre'] = mre
+            if mre != -1:
+                response_data['mre'] = mre
 
             return Response(response_data)
 
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Request to open-meteo API failed: {str(e)}'}, status=500)
-
-
-def generate_sentence(key_indicators):
-    humidity_mean = key_indicators['relative_humidity_2m']['mean']
-    wind_mean = key_indicators['wind_speed_10m']['mean']
-    wind_std = key_indicators['wind_speed_10m']['std']
-
-    sentence = f"The humidity has been around {humidity_mean:.2f}%. " \
-               f"The wind speed has been averaging {wind_mean:.2f} m/s with a {wind_std:.2f} m/s variation."
-
-    return sentence
-
-
-def calculate_rmse(predictions, targets):
-    return ((predictions - targets) ** 2).mean() ** 0.5
-
-
-def calculate_mae(predictions, targets):
-    return (abs(predictions - targets)).mean()
-
-
-def calculate_mre(predictions, targets):
-    return (abs(predictions - targets) / targets).mean()
