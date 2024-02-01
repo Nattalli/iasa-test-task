@@ -1,3 +1,6 @@
+from numpy import inf
+
+
 def calculate_rmse(predictions, targets):
     return ((predictions - targets) ** 2).mean() ** 0.5
 

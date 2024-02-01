@@ -5,10 +5,10 @@ import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 from django.db.models import Avg
-from numpy import inf
 from rest_framework import generics
 from rest_framework.response import Response
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.arima.model import ARIMA
 
 from .models import City
 from .serializers import CitySerializer, CountryAverageSerializer
@@ -24,6 +24,7 @@ class CityListView(generics.ListAPIView):
         if search_query:
             queryset = queryset.filter(city__icontains=search_query)
         return queryset
+
 
 class CountryAverageView(generics.RetrieveAPIView):
     serializer_class = CountryAverageSerializer
@@ -74,21 +75,34 @@ class WeatherDataView(generics.RetrieveAPIView):
             df['time'] = pd.to_datetime(df['time'])
             df.columns = ['ds', 'temperature_2m', 'relative_humidity_2m', 'wind_speed_10m']
 
-            model = ExponentialSmoothing(df['temperature_2m'], seasonal='add', seasonal_periods=24)
-            fit_model = model.fit()
-            forecast = fit_model.forecast(steps=24)
+            model_holtwinters = ExponentialSmoothing(df['temperature_2m'], seasonal='add', seasonal_periods=24)
+            fit_model_holtwinters = model_holtwinters.fit()
+            forecast_holtwinters = fit_model_holtwinters.forecast(steps=24)
 
-            forecast_data = pd.DataFrame(
+            forecast_data_holtwinters = pd.DataFrame(
                 {'time': pd.date_range(start=(datetime.now() + relativedelta(days=1)).strftime('%Y-%m-%d'), periods=24,
                                        freq='h'),
-                 'temperature_2m': forecast})
+                 'temperature_2m': forecast_holtwinters})
 
-            forecast_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+            model_arima = ARIMA(df['temperature_2m'], order=(1, 1, 1))
+            fit_model_arima = model_arima.fit()
+            forecast_arima = fit_model_arima.get_forecast(steps=24)
+
+            forecast_data_arima = pd.DataFrame(
+                {'time': pd.date_range(start=(datetime.now() + relativedelta(days=1)).strftime('%Y-%m-%d'), periods=24,
+                                       freq='h'),
+                 'temperature_2m': forecast_arima.predicted_mean})
 
             response_data = {
                 'forecast_data': {
-                    'time': forecast_data['time'].dt.strftime('%Y-%m-%d %H:%M:%S').values.tolist(),
-                    'temperature_2m': forecast_data['temperature_2m'].values.tolist()
+                    'time': {
+                        'holtwinters': forecast_data_holtwinters['time'].dt.strftime('%Y-%m-%d %H:%M:%S').tolist(),
+                        'arima': forecast_data_arima['time'].dt.strftime('%Y-%m-%d %H:%M:%S').tolist(),
+                    },
+                    'temperature_2m': {
+                        'holtwinters': forecast_data_holtwinters['temperature_2m'].values.tolist(),
+                        'arima': forecast_data_arima['temperature_2m'].values.tolist(),
+                    }
                 }
             }
 
@@ -108,14 +122,29 @@ class WeatherDataView(generics.RetrieveAPIView):
 
             real_temperature_for_comparison = real_temperature[-24:]
 
-            rmse = calculate_rmse(forecast_data['temperature_2m'], real_temperature_for_comparison)
-            mae = calculate_mae(forecast_data['temperature_2m'], real_temperature_for_comparison)
-            mre = calculate_mre(forecast_data['temperature_2m'], real_temperature_for_comparison)
+            rmse_holtwinters = calculate_rmse(forecast_data_holtwinters['temperature_2m'],
+                                              real_temperature_for_comparison)
+            mae_holtwinters = calculate_mae(forecast_data_holtwinters['temperature_2m'],
+                                            real_temperature_for_comparison)
+            mre_holtwinters = calculate_mre(forecast_data_holtwinters['temperature_2m'],
+                                            real_temperature_for_comparison)
 
-            response_data['rmse'] = rmse
-            response_data['mae'] = mae
-            if mre != -1:
-                response_data['mre'] = mre
+            rmse_arima = calculate_rmse(forecast_data_arima['temperature_2m'], real_temperature_for_comparison)
+            mae_arima = calculate_mae(forecast_data_arima['temperature_2m'], real_temperature_for_comparison)
+            mre_arima = calculate_mre(forecast_data_arima['temperature_2m'], real_temperature_for_comparison)
+
+            response_data['rmse'] = {
+                'holtwinters': rmse_holtwinters,
+                'arima': rmse_arima
+            }
+            response_data['mae'] = {
+                'holtwinters': mae_holtwinters,
+                'arima': mae_arima
+            }
+            response_data['mre'] = {
+                'holtwinters': mre_holtwinters if mre_holtwinters != -1 else 0,
+                'arima': mre_arima if mre_arima != -1 else 0,
+            }
 
             return Response(response_data)
 
