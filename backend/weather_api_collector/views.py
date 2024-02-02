@@ -1,14 +1,13 @@
 from datetime import datetime
 
-import numpy as np
 import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 from django.db.models import Avg
 from rest_framework import generics
 from rest_framework.response import Response
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 from .models import City
 from .serializers import CitySerializer, CountryAverageSerializer

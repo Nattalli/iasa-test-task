@@ -10,7 +10,8 @@ def calculate_mae(predictions, targets):
 
 
 def calculate_mre(predictions, targets):
-    if result := (abs(predictions - targets) / targets).mean() != inf:
+    result = (abs(predictions - targets) / targets).mean()
+    if result != inf:
         return result
     return -1
 
