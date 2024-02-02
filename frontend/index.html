@@ -1,13 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+    <title>Weather App</title>
+    <!-- Include Vue.js and Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Add your custom styles -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #app {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label, select, button {
+            margin: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h1, h2 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h1>Ласка вітаємо, оберіть країну та місто!</h1>
+
+    <label for="countries">Оберіть країну:</label>
+    <select id="countries" v-model="selectedCountry" @change="loadCities">
+        <option v-for="country in countries" :value="country.country" :key="country.country">{{ country.country }}</option>
+    </select>
+
+    <label for="cities">Оберіть місто:</label>
+    <select id="cities" v-model="selectedCity">
+        <option v-for="city in cities" :value="city.city" :key="city.city">{{ city.city }}</option>
+    </select>
+
+    <button @click="getWeather">Отримати погоду</button>
+
+    <div v-if="weatherData">
+        <h2>Погода в {{ selectedCity }}</h2>
+        <p>Температура: {{ weatherData.temperature }}&deg;C</p>
+        <p>Вологість: {{ weatherData.humidity }}%</p>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            countries: [],
+            cities: [],
+            selectedCountry: '',
+            selectedCity: '',
+            weatherData: null,
+        },
+        methods: {
+            loadCountries() {
+                axios.get('http://127.0.0.1:8000/api/countries/')
+                    .then(response => {
+                        this.countries = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error loading countries:', error);
+                    });
+            },
+            loadCities() {
+                if (this.selectedCountry) {
+                    axios.get(`http://127.0.0.1:8000/api/cities/${this.selectedCountry}/`)
+                        .then(response => {
+                            this.cities = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error loading cities:', error);
+                        });
+                }
+            },
+            getWeather() {
+                // Add logic to get weather data based on selectedCity's latitude and longitude
+            },
+        },
+        mounted() {
+            this.loadCountries();
+        },
+        watch: {
+            selectedCountry() {
+                this.loadCities();
+            },
+        },
+    });
+</script>
+
+</body>
 </html>

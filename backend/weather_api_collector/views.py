@@ -45,10 +45,12 @@ class CountryAverageView(generics.RetrieveAPIView):
 class CountryListView(generics.ListAPIView):
     queryset = City.objects.values('country').distinct().order_by('country')
     serializer_class = CountrySerializer
+    pagination_class = None
 
 
 class CityByCountryListView(generics.ListAPIView):
     serializer_class = CitySerializer
+    pagination_class = None
 
     def get_queryset(self):
         country = self.kwargs['country']
