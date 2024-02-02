@@ -40,7 +40,7 @@ class WeatherDataViewTest(TestCase):
         )
 
     def test_weather_data_view(self):
-        url = reverse('weather_historical_data', kwargs={'lat': str(self.city.lat), 'lng': str(self.city.lng)})
+        url = reverse('weather_historical_data', kwargs={'city': str(self.city.city)})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertIn('forecast_data', response.data)

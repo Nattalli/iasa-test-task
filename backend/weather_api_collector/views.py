@@ -57,8 +57,9 @@ class CityByCountryListView(generics.ListAPIView):
 
 class WeatherDataView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
-        lat = self.kwargs.get('lat')
-        lng = self.kwargs.get('lng')
+        city = City.objects.filter(city=self.kwargs.get('city')).first()
+        lat = city.lat
+        lng = city.lng
 
         if not lat or not lng:
             return Response({'error': 'Latitude and longitude parameters are required'}, status=400)
