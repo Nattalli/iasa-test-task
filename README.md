@@ -1,6 +1,6 @@
 # IASA hackaton test task
 
-## Running via Docker (it needs a time!)
+## Running via Docker (it takes a time!)
 
 1. Install / open Docker
 2. Run `docker-compose up –-build` at the terminal
