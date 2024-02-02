@@ -12,3 +12,9 @@ class CitySerializer(serializers.ModelSerializer):
 class CountryAverageSerializer(serializers.Serializer):
     average_lat = serializers.FloatField()
     average_lng = serializers.FloatField()
+
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = ['country']

@@ -10,7 +10,7 @@ from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 from .models import City
-from .serializers import CitySerializer, CountryAverageSerializer
+from .serializers import CitySerializer, CountryAverageSerializer, CountrySerializer
 from .utils import generate_sentence, calculate_mae, calculate_mre, calculate_rmse
 
 
@@ -40,6 +40,19 @@ class CountryAverageView(generics.RetrieveAPIView):
 
         serializer = self.get_serializer(average_values)
         return Response(serializer.data)
+
+
+class CountryListView(generics.ListAPIView):
+    queryset = City.objects.values('country').distinct().order_by('country')
+    serializer_class = CountrySerializer
+
+
+class CityByCountryListView(generics.ListAPIView):
+    serializer_class = CitySerializer
+
+    def get_queryset(self):
+        country = self.kwargs['country']
+        return City.objects.filter(country__iexact=country).order_by('city')
 
 
 class WeatherDataView(generics.RetrieveAPIView):
