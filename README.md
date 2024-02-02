@@ -1,8 +1,15 @@
 # IASA hackaton test task
 
-## Backend
+## Running via Docker (it needs a time!)
 
-### Installing using Github
+1. Install / open Docker
+2. Run `docker-compose up –-build` at the terminal
+
+## Running locally
+
+### Backend
+
+#### Installing using Github
 
 Python 3.10+ is a must
 
@@ -19,5 +26,12 @@ Python 3.10+ is a must
 `cd backend`
 6. And mark it as the source root 
 7. Install requirements: `pip install -r requirements.txt`
-8. Make migrations: `python manage.py migrate`  
+8. Make migrations: `python manage.py migrate`
 9. Now you can run it: `python manage.py runserver`
+
+### Frontend
+
+1. Go to the `frontend` folder:
+   `cd frontend`
+2. Install requirements: `npm i`
+3. Run the frontend part: `npm run dev`
