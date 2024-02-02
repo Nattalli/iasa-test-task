@@ -54,7 +54,7 @@ class CityByCountryListView(generics.ListAPIView):
 
     def get_queryset(self):
         country = self.kwargs['country']
-        return City.objects.filter(country__iexact=country).order_by('city')
+        return City.objects.filter(country__exact=country.capitalize()).order_by('city')
 
 
 class WeatherDataView(generics.RetrieveAPIView):
