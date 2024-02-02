@@ -5,10 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather App</title>
-    <!-- Include Vue.js and Axios -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <!-- Add your custom styles -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -35,6 +33,11 @@
             font-size: 16px;
         }
 
+        select {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
         button {
             padding: 10px;
             cursor: pointer;
@@ -48,6 +51,11 @@
             background-color: #0056b3;
         }
 
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
         h1, h2 {
             margin-bottom: 20px;
         }
@@ -55,7 +63,7 @@
 </head>
 <body>
 <div id="app">
-    <h1>Ласка вітаємо, оберіть країну та місто!</h1>
+    <h1>Ласкаво вітаємо, оберіть країну та місто!</h1>
 
     <label for="countries">Оберіть країну:</label>
     <select id="countries" v-model="selectedCountry" @change="loadCities">
@@ -67,7 +75,7 @@
         <option v-for="city in cities" :value="city.city" :key="city.city">{{ city.city }}</option>
     </select>
 
-    <button @click="getWeather">Отримати погоду</button>
+    <button @click="getWeather" :disabled="!selectedCountry || !selectedCity">Отримати погоду</button>
 
     <div v-if="weatherData">
         <h2>Погода в {{ selectedCity }}</h2>
@@ -108,7 +116,6 @@
                 }
             },
             getWeather() {
-                // Add logic to get weather data based on selectedCity's latitude and longitude
             },
         },
         mounted() {
