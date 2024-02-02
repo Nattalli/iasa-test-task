@@ -59,6 +59,31 @@
         h1, h2 {
             margin-bottom: 20px;
         }
+
+        .forecast-container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .forecast-data, .additional-data {
+            flex: 1;
+            margin: 10px;
+        }
+
+        .forecast-time {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .sentence {
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        .key-indicators {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -77,10 +102,38 @@
 
     <button @click="getWeather" :disabled="!selectedCountry || !selectedCity">Отримати погоду</button>
 
-    <div v-if="weatherData">
-        <h2>Погода в {{ selectedCity }}</h2>
-        <p>Температура: {{ weatherData.temperature }}&deg;C</p>
-        <p>Вологість: {{ weatherData.humidity }}%</p>
+    <div v-if="forecastData">
+        <h3>Прогноз погоди на наступну добу</h3>
+        <div class="forecast-container">
+            <div class="forecast-data">
+                <div class="forecast-time">Час</div>
+                <div v-for="time in forecastData.forecast_data.time.holtwinters">{{ time }}</div>
+            </div>
+
+            <div class="forecast-data">
+                <div class="forecast-time">Температура (Holtwinters)</div>
+                <div v-for="temp in forecastData.forecast_data.temperature_2m.holtwinters">{{ temp.toFixed(2) }}&deg;C</div>
+            </div>
+
+            <div class="forecast-data">
+                <div class="forecast-time">Температура (ARIMA)</div>
+                <div v-for="temp in forecastData.forecast_data.temperature_2m.arima">{{ temp.toFixed(2) }}&deg;C</div>
+            </div>
+        </div>
+
+        <div class="additional-data">
+            <div class="sentence">{{ forecastData.sentence }}</div>
+
+            <div class="key-indicators">
+                <span style="font-style: italic; font-weight: bold;">Метрики оцінки точності прогнозу</span>
+                <div>RMSE (Holtwinters): {{ forecastData.rmse.holtwinters.toFixed(2) }}</div>
+                <div>RMSE (ARIMA): {{ forecastData.rmse.arima.toFixed(2) }}</div>
+                <div>MAE (Holtwinters): {{ forecastData.mae.holtwinters.toFixed(2) }}</div>
+                <div>MAE (ARIMA): {{ forecastData.mae.arima.toFixed(2) }}</div>
+                <div>MRE (Holtwinters): {{ forecastData.mre.holtwinters.toFixed(2) }}</div>
+                <div>MRE (ARIMA): {{ forecastData.mre.arima.toFixed(2) }}</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -92,7 +145,7 @@
             cities: [],
             selectedCountry: '',
             selectedCity: '',
-            weatherData: null,
+            forecastData: null,
         },
         methods: {
             loadCountries() {
@@ -116,6 +169,13 @@
                 }
             },
             getWeather() {
+                axios.get(`http://127.0.0.1:8000/api/weather-data/${this.selectedCity}/`)
+                    .then(response => {
+                        this.forecastData = response.data;
+                    })
+                    .catch(error => {
+                        console.error('Error loading weather data:', error);
+                    });
             },
         },
         mounted() {
