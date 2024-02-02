@@ -35,4 +35,3 @@ class TestWeatherFunctions(unittest.TestCase):
         expected_sentence = ("The humidity has been around 40.50%. The wind speed has been averaging 5.30 m/s with "
                              "a 1.20 m/s variation.")
         self.assertEqual(generate_sentence(key_indicators), expected_sentence)
-
